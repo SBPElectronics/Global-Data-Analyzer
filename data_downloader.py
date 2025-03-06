@@ -56,7 +56,7 @@ class PopulationApp:
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         self.file_path = self.find_csv_file(os.getcwd())
         self.countries, self.population_data = self.read_csv_data()
-        self.selected_country = tk.StringVar()
+        self.selected_countries = []
         self.create_widgets()
 
     def find_csv_file(self, root_folder, filename="world_population.csv"):
@@ -85,53 +85,58 @@ class PopulationApp:
         return countries, population_data
 
     def create_widgets(self):
-        ttk.Label(self.main_frame, text="Select a Country:").grid(row=0, column=0, pady=5)
-        country_entry = tk.Entry(self.main_frame, textvariable=self.selected_country)
-        country_entry.grid(row=1, column=0, pady=5)
-        SearchableComboBox(country_entry, self.countries, self.plot_population)
+        ttk.Label(self.main_frame, text="Select up to 5 Countries:").grid(row=0, column=0, pady=5)
+        
+        # Create up to 5 Searchable ComboBoxes for country selection
+        self.country_entries = []
+        for i in range(5):
+            entry = tk.Entry(self.main_frame)
+            entry.grid(row=i+1, column=0, pady=5)
+            self.country_entries.append(entry)
+            SearchableComboBox(entry, self.countries, self.update_selected_countries)
+
         plot_button = ttk.Button(self.main_frame, text="Plot Population Trend", command=self.plot_population)
-        plot_button.grid(row=2, column=0, pady=10)
+        plot_button.grid(row=6, column=0, pady=10)
+
         self.figure, self.ax = plt.subplots(figsize=(6, 4))
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.main_frame)
-        self.canvas.get_tk_widget().grid(row=3, column=0, pady=10)
+        self.canvas.get_tk_widget().grid(row=7, column=0, pady=10)
 
-    def plot_population(self, country):
-        """Plot the population growth of a selected country inside Tkinter."""
-        file_path = self.find_csv_file(os.getcwd())
-        if not file_path:
-            print("CSV file not found!")
+    def update_selected_countries(self, country):
+        """Update selected countries list when a country is selected in any entry."""
+        self.selected_countries = [entry.get() for entry in self.country_entries if entry.get()]
+
+    def plot_population(self):
+        """Plot the population growth of up to 5 selected countries."""
+        if not self.selected_countries:
+            print("No countries selected!")
             return
+        
+        # Clear the previous plot
+        self.ax.clear()
 
-        with open(file_path, newline='', encoding='utf-8') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                if row['Country/Territory'] == country:
-                    print("Raw row data:", row)  # Debugging
+        for country in self.selected_countries:
+            if country not in self.population_data:
+                print(f"Data not found for {country}.")
+                continue
 
-                    # Extract only valid population data
-                    data = {key: int(row[key]) for key in row.keys() if "Population" in key and "Percentage" not in key and "Growth" not in key}
-                    print("Extracted data:", data)  # Debugging
+            # Extract population data for the country
+            data = self.population_data[country]
+            years = [int(year.split()[0]) for year in data.keys() if "Population" in year]
+            populations = [data[year] for year in data.keys() if "Population" in year]
 
-                    # Extract numeric years from column headers
-                    years = [int(year.split()[0]) for year in data.keys()]
-                    populations = list(data.values())
+            # Plot the population trend for each selected country
+            self.ax.plot(years, populations, marker='o', linestyle='-', label=country)
 
-                    # Clear the previous plot
-                    self.ax.clear()
+        # Customize plot appearance
+        self.ax.set_xlabel("Year")
+        self.ax.set_ylabel("Population in Millions")
+        self.ax.set_title(f"Population Growth of Selected Countries")
+        self.ax.legend()
+        self.ax.grid(True)
 
-                    # Plot the population trend inside Tkinter
-                    self.ax.plot(years, populations, marker='o', linestyle='-', label=country)
-                    self.ax.set_xlabel("Year")
-                    self.ax.set_ylabel("Population")
-                    self.ax.set_title(f"Population Growth of {country}")
-                    self.ax.legend()
-                    self.ax.grid(True)
-
-                    # Update the canvas inside Tkinter
-                    self.canvas.draw()
-                    break
-
-
+        # Update the canvas inside Tkinter
+        self.canvas.draw()
 
 
 if __name__ == "__main__":
