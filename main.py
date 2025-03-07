@@ -9,7 +9,9 @@ class TheDataAnalyser:
         
         # Create the main frame
         self.main_frame = ttk.Frame(self.root, padding=10)  
-        self.main_frame.pack(fill="both", expand=True)  
+        self.main_frame.pack()  
+        self.title = tk.Label(self.main_frame, text="The Global Data Analyzer")
+        self.title.pack(fill = "x", expand = True ) 
 
         # Button to open PopulationApp
         self.population_button = tk.Button(
@@ -19,7 +21,7 @@ class TheDataAnalyser:
             fg="black", 
             command=self.open_population_app  # Calls the function
         )
-        self.population_button.pack(fill="x", expand=True, padx=10, pady=10)  
+        self.population_button.pack(fill="x", expand=True)  
 
     def open_population_app(self):
         new_window = tk.Toplevel(self.root)  # Create a new window
