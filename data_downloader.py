@@ -2,121 +2,145 @@ import tkinter as tk
 from tkinter import ttk
 import csv
 import os
-import glob
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 class SearchableComboBox:
     """A ListBox class that provides a searchable dropdown list."""
-    def __init__(self, entry_widget, options):
-        self.options = options  # List of options for the dropdown
-        self.entry = entry_widget  # External Entry widget to display dropdown
-        
-        # Bind the Entry widget to filter and display the dropdown
-        self.entry.bind("<KeyRelease>", self.on_entry_key)  # Filter options as keys are pressed
-        self.entry.bind("<FocusIn>", self.show_dropdown)  # Show dropdown when entry is focused
-
-        # Create Listbox as a dropdown
-        self.listbox = tk.Listbox(self.entry.master, height=5, width=30)  # Place dropdown in the same parent widget
-        self.listbox.bind("<<ListboxSelect>>", self.on_select)  # Selects the chosen option from the dropdown
-        self.listbox.bind("<FocusOut>", self.hide_dropdown)  # Hide dropdown when focus is lost
-
-        # Populate listbox initially with all options
+    def __init__(self, entry_widget, options, on_select_callback):
+        self.options = options
+        self.entry = entry_widget
+        self.on_select_callback = on_select_callback
+        self.listbox = tk.Listbox(self.entry.master, height=5, width=30)
+        self.listbox.bind("<<ListboxSelect>>", self.on_select)
+        self.entry.bind("<KeyRelease>", self.on_entry_key)
+        self.entry.bind("<FocusIn>", self.show_dropdown)
         for option in self.options:
             self.listbox.insert(tk.END, option)
 
     def on_entry_key(self, event):
-        """Filter options based on typed input and update dropdown list."""
-        typed_value = self.entry.get().strip().lower()  # Get and normalize input text
-        self.listbox.delete(0, tk.END)  # Clear previous options
-
-        if not typed_value:  # Show all options if no input
+        typed_value = self.entry.get().strip().lower()
+        self.listbox.delete(0, tk.END)
+        if not typed_value:
             for option in self.options:
                 self.listbox.insert(tk.END, option)
         else:
-            # Filter options starting with the typed input
             filtered_options = [option for option in self.options if option.lower().startswith(typed_value)]
             for option in filtered_options:
-                self.listbox.insert(tk.END, option)  # Populate listbox with filtered options
-
-        self.show_dropdown()  # Ensure dropdown is visible with updated options
+                self.listbox.insert(tk.END, option)
+        self.show_dropdown()
 
     def on_select(self, event):
-        """Set the selected option in the entry widget and hide the dropdown."""
         selected_index = self.listbox.curselection()
-        if selected_index:  # If an option was selected
-            selected_option = self.listbox.get(selected_index)  # Get selected option
-            self.entry.delete(0, tk.END)  # Clear current entry text
-            self.entry.insert(0, selected_option)  # Insert selected option into entry
-        self.hide_dropdown()  # Hide dropdown after selecting an option
+        if selected_index:
+            selected_option = self.listbox.get(selected_index)
+            self.entry.delete(0, tk.END)
+            self.entry.insert(0, selected_option)
+            self.on_select_callback(selected_option)
+        self.hide_dropdown()
 
     def show_dropdown(self, event=None):
-        """Display the dropdown list just below the entry widget."""
-        self.listbox.place(in_=self.entry, x=0, rely=1, relwidth=1.0, anchor="nw")  # Position listbox below entry
-        self.listbox.lift()  # Bring listbox to the front
+        self.listbox.place(in_=self.entry, x=0, rely=1, relwidth=1.0, anchor="nw")
+        self.listbox.lift()
 
     def hide_dropdown(self, event=None):
-        """Hide the dropdown list."""
-        self.listbox.place_forget()  # Remove listbox from display
+        self.listbox.place_forget()
 
 
-class BudgetApp:
-    """Main application class for the Budget Manager."""
+class PopulationApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Budget Manager")
+        self.root.title("Population Trends")
         self.main_frame = ttk.Frame(self.root, padding="10")
         self.main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        self.main_screen()  # Display main screen
+        self.file_path = self.find_csv_file(os.getcwd())
+        self.countries, self.population_data = self.read_csv_data()
+        self.selected_countries = []
+        self.create_widgets()
 
-    def find_csv_file(self, root_folder, target_filename="world_population.csv"):
-        """Recursively search for a file starting from root_folder."""
+    def find_csv_file(self, root_folder, filename="world_population.csv"):
         for dirpath, _, filenames in os.walk(root_folder):
-            if target_filename in filenames:
-                return os.path.join(dirpath, target_filename)  # Return the full path of the file
-        return None  # Return None if the file is not found
+            if filename in filenames:
+                return os.path.join(dirpath, filename)
+        return None
 
-    def read_countries_from_csv(self, filename):
-        """Reads the country names from the CSV file."""
+    def read_csv_data(self):
+        if not self.file_path:
+            print("CSV file not found!")
+            return [], {}
         countries = []
-        with open(filename, newline='', encoding='utf-8') as csvfile:
+        population_data = {}
+        with open(self.file_path, newline='', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                countries.append(row['Country/Territory'])  # Get country name from each row
-        return countries
+                country = row['Country/Territory']
+                countries.append(country)
+                population_data[country] = {
+                    year: int(row[year]) for year in ['1970 Population', '1980 Population', '1990 Population',
+                                                      '2000 Population', '2010 Population', '2015 Population',
+                                                      '2020 Population', '2022 Population'] if year in row and row[year]
+                }
+                population_data[country]['Growth Rate'] = float(row['Growth Rate']) if row['Growth Rate'] else 0.0
+        return countries, population_data
 
-    def main_screen(self):
-        """Screen for searching countries."""
-        self.clear_frame(self.main_frame)  # Clear any existing widgets in main frame
+    def create_widgets(self):
+        ttk.Label(self.main_frame, text="Select up to 5 Countries:").grid(row=0, column=0, pady=5)
+        
+        # Create up to 5 Searchable ComboBoxes for country selection
+        self.country_entries = []
+        for i in range(5):
+            entry = tk.Entry(self.main_frame)
+            entry.grid(row=i+1, column=0, pady=5)
+            self.country_entries.append(entry)
+            SearchableComboBox(entry, self.countries, self.update_selected_countries)
 
-        # Automatically search for the CSV file in the current directory and subdirectories
-        file_path = self.find_csv_file(os.getcwd())
+        plot_button = ttk.Button(self.main_frame, text="Plot Population Trend", command=self.plot_population)
+        plot_button.grid(row=6, column=0, pady=10)
 
-        if not file_path:
-            print("CSV file not found!")
+        self.figure, self.ax = plt.subplots(figsize=(6, 4))
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.main_frame)
+        self.canvas.get_tk_widget().grid(row=7, column=0, pady=10)
+
+    def update_selected_countries(self, country):
+        """Update selected countries list when a country is selected in any entry."""
+        self.selected_countries = [entry.get() for entry in self.country_entries if entry.get()]
+
+    def plot_population(self):
+        """Plot the population growth of up to 5 selected countries."""
+        if not self.selected_countries:
+            print("No countries selected!")
             return
+        
+        # Clear the previous plot
+        self.ax.clear()
 
-        # Read countries from the CSV file
-        countries = self.read_countries_from_csv(file_path)
+        for country in self.selected_countries:
+            if country not in self.population_data:
+                print(f"Data not found for {country}.")
+                continue
 
-        # Create entry field for country search
-        country_search_var = tk.Entry(self.main_frame)  # Entry box for typing country name
-        country_search_var.grid(row=1, column=0, pady=70)  # Position entry box
+            # Extract population data for the country
+            data = self.population_data[country]
+            years = [int(year.split()[0]) for year in data.keys() if "Population" in year]
+            populations = [data[year] for year in data.keys() if "Population" in year]
 
-        # Create SearchableComboBox with the external entry widget
-        SearchableComboBox(country_search_var, countries)  # Initialize dropdown with countries
+            # Plot the population trend for each selected country
+            self.ax.plot(years, populations, marker='o', linestyle='-', label=country)
 
-    def clear_frame(self, frame):
-        """Clear all widgets from a frame."""
-        for widget in frame.winfo_children():
-            widget.destroy()  # Destroy each widget in the frame
+        # Customize plot appearance
+        self.ax.set_xlabel("Year")
+        self.ax.set_ylabel("Population in Millions")
+        self.ax.set_title(f"Population Growth of Selected Countries")
+        self.ax.legend()
+        self.ax.grid(True)
+
+        # Update the canvas inside Tkinter
+        self.canvas.draw()
 
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Budget Manager")
-    root.geometry("800x600")  # Set the window size to 800x600
-    root.resizable(True, True)  # Allow resizing
-
-    app = BudgetApp(root)
+    root.geometry("800x600")
+    app = PopulationApp(root)
     root.mainloop()
