@@ -7,7 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 class SearchableComboBox:
-    """A ListBox class that provides a searchable dropdow3n list."""
+    """A ListBox class that provides a searchable dropdown list."""
     def __init__(self, entry_widget, options, on_select_callback):
         self.options = options
         self.entry = entry_widget
