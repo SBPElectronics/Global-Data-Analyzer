@@ -14,10 +14,18 @@ class TheDataAnalyser:
         menubar = Menu(root) # Creates the toolbar at the top
         self.root.config(menu=menubar) 
 
-        fileMenu = Menu(menubar, tearoff=0) 
-        fileMenu.add_command(label="About") # New button
-        fileMenu.add_command(label="Check For Updates") # Open button
-        menubar.add_cascade(label="Help", menu=fileMenu) # File dropdown
+        helpMenu = Menu(menubar, tearoff=0) 
+        helpMenu.add_command(label="About") # New button
+        helpMenu.add_command(label="Check For Updates") # Open button
+        menubar.add_cascade(label="Help", menu=helpMenu) # File dropdown
+
+
+        collaboratorMenu = Menu(menubar, tearoff=0) 
+        collaboratorMenu.add_command(label="hum-projects") 
+        collaboratorMenu.add_command(label="SBPElectronics")
+        collaboratorMenu.add_command(label="MAHPROJECTS")
+        menubar.add_cascade(label="Contributors", menu=collaboratorMenu) # File dropdown
+
 
 
         # Create the main frame
