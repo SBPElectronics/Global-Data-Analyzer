@@ -1,1 +1,1 @@
-# Global-Data-Analyzer
+GDP is the total market value of all goods and services of a country.
