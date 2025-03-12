@@ -1,5 +1,3 @@
-# main.py
-
 import tkinter as tk
 from tkinter import ttk, Menu
 from data_downloader import PopulationApp, GDPApp  # Import both apps
