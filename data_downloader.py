@@ -65,6 +65,12 @@ class PopulationApp:
                 return os.path.join(dirpath, filename)
         return None
 
+    def find_gdp_file(self, root_folder, filename="gdp.csv"):
+        for dirpath, _, filenames in os.walk(root_folder):
+            if filename in filenames:
+                return os.path.join(dirpath, filename)
+        return None
+
     def read_csv_data(self):
         if not self.file_path:
             print("CSV file not found!")

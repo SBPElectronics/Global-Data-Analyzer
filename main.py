@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, Menu
 from data_downloader import PopulationApp  # Import PopulationApp class
 from data_visualizer import GDPApp  # Import GDPApp class
 
@@ -7,7 +7,19 @@ class TheDataAnalyser:
     def __init__(self, root):  
         self.root = root
         root.geometry("300x300")
-        
+
+        canvas = tk.Canvas(root, height=2, width=400, highlightthickness=0) # Draws a line between the two labels for a neat look
+        canvas.pack(fill = "x") # The placingxt="Home")
+
+        menubar = Menu(root) # Creates the toolbar at the top
+        self.root.config(menu=menubar) 
+
+        fileMenu = Menu(menubar, tearoff=0) 
+        fileMenu.add_command(label="About") # New button
+        fileMenu.add_command(label="Check For Updates") # Open button
+        menubar.add_cascade(label="Help", menu=fileMenu) # File dropdown
+
+
         # Create the main frame
         self.main_frame = ttk.Frame(self.root, padding=10)  
         self.main_frame.pack()  
