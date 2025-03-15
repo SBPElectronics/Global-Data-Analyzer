@@ -4,6 +4,7 @@ import csv
 import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.ticker as mtick  # ✅ Import ticker for commas in Y-axis
 
 
 class SearchableComboBox:
@@ -17,6 +18,7 @@ class SearchableComboBox:
         self.listbox.bind("<<ListboxSelect>>", self.on_select)
         self.entry.bind("<KeyRelease>", self.on_entry_key)
         self.entry.bind("<FocusIn>", self.show_dropdown)
+        self.entry.bind("<FocusOut>", self.hide_dropdown)  # ✅ Hide on focus out
 
         for option in self.options:
             self.listbox.insert(tk.END, option)
@@ -114,6 +116,10 @@ class PopulationApp:
         self.ax.set_title("Population Growth")
         self.ax.set_xlabel("Year")
         self.ax.set_ylabel("Population")
+
+        # ✅ Add commas to Y-axis labels for readability
+        self.ax.yaxis.set_major_formatter(mtick.StrMethodFormatter('{x:,.0f}'))
+
         self.ax.legend()
         self.canvas.draw()
 
