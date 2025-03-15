@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, Menu
 from data_downloader import PopulationApp, GDPApp  # Import both apps
+from explore import open_dataset  # Import the function from explore.py
 
 class TheDataAnalyser:
     def __init__(self, root):  
@@ -30,6 +31,10 @@ class TheDataAnalyser:
 
         self.title = tk.Label(self.main_frame, text="The Global Data Analyzer")
         self.title.pack(fill="x", expand=True)
+
+        # Pass 'root' when calling open_dataset
+        dataset_button = tk.Button(root, text="Open Dataset", command=lambda: open_dataset(root))
+        dataset_button.pack(pady=10)
 
         # Population button
         self.population_button = tk.Button(
