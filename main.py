@@ -32,9 +32,7 @@ class TheDataAnalyser:
         self.title = tk.Label(self.main_frame, text="The Global Data Analyzer")
         self.title.pack(fill="x", expand=True)
 
-        # Pass 'root' when calling open_dataset
-        dataset_button = tk.Button(root, text="Open Dataset", command=lambda: open_dataset(root))
-        dataset_button.pack(pady=10)
+        
 
         # Population button
         self.population_button = tk.Button(
@@ -55,6 +53,12 @@ class TheDataAnalyser:
             command=self.open_gdp_app
         )
         self.gdp_button.pack(fill="x", expand=True)
+
+        # Pass 'root' when calling open_dataset
+        self.dataset_button = tk.Button(self.main_frame, text="Open Dataset", command=lambda: open_dataset(root),
+                                        bg="green",
+                                        fg="black",)
+        self.dataset_button.pack(fill = 'x', expand=True)
 
     def open_population_app(self):
         new_window = tk.Toplevel(self.root)
